@@ -1,0 +1,6 @@
+$out_root/
+{
+  include libharfbuzz/
+}
+
+export $out_root/libharfbuzz/$import.target
