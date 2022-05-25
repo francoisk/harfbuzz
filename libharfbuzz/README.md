@@ -1,3 +1,1 @@
-# libharfbuzz
-
-C++ library
+../upstream/README.md
