@@ -1,6 +1,8 @@
 # Test executables.
 #
 driver
+driver-icu
+driver-subset
 
 # Testscript output directories (can be symlinks).
 #

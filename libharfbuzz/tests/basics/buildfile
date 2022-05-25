@@ -1,3 +1,9 @@
-import libs = libharfbuzz%lib{harfbuzz}
+import libs_main   = libharfbuzz%lib{harfbuzz}
+import libs_icu    = libharfbuzz%lib{harfbuzz-icu}
+import libs_subset = libharfbuzz%lib{harfbuzz-subset}
 
-exe{driver}: {hxx cxx}{**} $libs testscript{**}
+./: exe{driver driver-icu driver-subset}
+
+exe{driver}:        cxx{driver}        $libs_main
+exe{driver-icu}:    cxx{driver-icu}    $libs_icu
+exe{driver-subset}: cxx{driver-subset} $libs_subset
