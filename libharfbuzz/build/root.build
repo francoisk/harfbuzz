@@ -1,6 +1,6 @@
-# Uncomment to suppress warnings coming from external libraries.
-#
-#cxx.internal.scope = current
+using in
+
+using c
 
 cxx.std = latest
 
@@ -9,9 +9,8 @@ using cxx
 hxx{*}: extension = hh
 cxx{*}: extension = cc
 
-# Assume headers are importable unless stated otherwise.
-#
-hxx{*}: cxx.importable = true
+h{*}: c.importable = true
+hxx{*}: cxx.importable = false
 
 # The test target for cross-testing (running tests under Wine, etc).
 #

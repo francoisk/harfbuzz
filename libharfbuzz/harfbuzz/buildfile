@@ -1,0 +1,184 @@
+libs = harfbuzz harfbuzz-icu harfbuzz-subset
+
+./: lib{$libs}
+
+import hb_libs      = libfreetype%lib{freetype}
+import hb_icu_libs  = libicuuc%lib{icuuc}
+import hb_icu_libs += libicuuc%lib{icudata}
+
+windows = ($c.target.class == 'windows')
+linux   = ($c.target.class == 'linux')
+bsd     = ($c.target.class == 'bsd')
+
+# Public headers: subset library.
+#
+hdr_subset = hb-subset \
+             hb-subset-repacker
+
+# Private headers: subset library (note: some are shared with the main
+# library).
+#
+hxx_subset = hb-number                  \
+             hb-subset-cff-common       \
+             hb-subset-cff1             \
+             hb-subset-cff2             \
+             hb-subset-input            \
+             hb-subset-plan             \
+             hb-subset
+
+# Source files: subset library (note: some are shared with the main library).
+#
+src_subset = $hxx_subset        \
+             hb-static          \
+             hb-subset-repacker \
+             hb-ot-cff1-table   \
+             hb-ot-cff2-table
+
+# Source files: subset library only (that is, not shared with main library).
+#
+src_subset_only = $name(cxx{hb-subset*})
+
+# Source files: main library (note: some are shared with the subset library).
+#
+src = $name(cxx{** -hb-subset* -hb-icu})
+
+# Note that lib{harfbuzz} and lib{harfbuzz-subset} are libraries with a C
+# interface and a C++ implementation: the source files (.cc) and private
+# headers (.hh) are C++ but the public headers (.h with the exception of
+# config.h) are pure C. The source files are compiled with the C++ compiler
+# but the library is linked with the C compiler.
+#
+[rule_hint=c] lib{harfbuzz}: h{** -{$hdr_subset} -hb-icu -config} h{config}     \
+                             obj{$src}                                          \
+                             $hb_libs
+
+[rule_hint=c] lib{harfbuzz-subset}: h{$hdr_subset config}       \
+                                    obj{$src_subset}            \
+                                    lib{harfbuzz}
+
+# Note that this library is linked with C++ because ICU links to the C++
+# standard library.
+#
+lib{harfbuzz-icu}: {h cxx}{hb-icu} h{config} lib{harfbuzz} $hb_icu_libs
+
+# Don't include (private) C++ headers in the C libraries.
+#
+# Note that not every source file has a matching private header so we can't
+# make this part of the `obj{}: cxx{}` dependencies below.
+#
+lib{harfbuzz}:        hxx{** -{$hxx_subset}}: include = adhoc
+lib{harfbuzz-subset}: hxx{$hxx_subset}:       include = adhoc
+
+# Windows module definition files (manually generated; see README-DEV).
+#
+lib{harfbuzz}:        def{harfbuzz}:        include = $windows
+lib{harfbuzz-subset}: def{harfbuzz-subset}: include = $windows
+lib{harfbuzz-icu}:    def{harfbuzz-icu}:    include = $windows
+
+# Declare dependencies between the C libraries' object files and their C++
+# source files (the C link rule cannot do this automatically).
+#
+for n : $src
+{
+  obj{$n}: cxx{$n} $hb_libs
+}
+
+for n : $src_subset_only
+{
+  obj{$n}: cxx{$n} lib{harfbuzz}
+}
+
+using autoconf
+
+# Configuration header.
+#
+# Note that the upstream config.h is not generated from a template.
+#
+h{config}: in{config}
+{
+  PACKAGE_VERSION = "$version.major.$version.minor.$version.patch"
+
+  # Enabled dependencies.
+  #
+  HAVE_FREETYPE = 1
+  HAVE_FT_DONE_MM_VAR = 1
+  HAVE_FT_GET_VAR_BLEND_COORDINATES = 1
+  HAVE_FT_SET_VAR_BLEND_COORDINATES = 1
+  HAVE_ICU = 1
+
+  # Disabled dependencies.
+  #
+  HAVE_CAIRO = 0
+  HAVE_CAIRO_FT = 0
+  HAVE_GLIB = 0
+  HAVE_GOBJECT = 0
+
+  # @@ TODO CI only: remove once autoconf has been staged.
+  #
+  HAVE_ATEXIT = 1
+  HAVE_GETPAGESIZE = 1
+  HAVE_ISATTY = 1
+  HAVE_MMAP = 1
+  HAVE_MPROTECT = 1
+  HAVE_NEWLOCALE = 1
+  HAVE_PTHREAD = 1
+  HAVE_STDBOOL_H = 1
+  HAVE_SYSCONF = 1
+  HAVE_SYS_MMAN_H = 1
+  HAVE_USELOCALE = 1
+  HAVE_XLOCALE_H = 1   # FreeBSD, Mac OS
+}
+
+# Build options.
+#
+# @@ TMP upstream/meson.build deliberately disables 4 different type
+#    conversion warnings on MSVC. We get ~3000 of them in CI. Should we also
+#    disable them?
+#
+cxx.poptions =+ "-I$out_base" "-I$src_base" -DHAVE_CONFIG_H
+
+if ($cxx.class == 'gcc')
+{
+  cxx.coptions += -fno-exceptions               \
+                  -fno-rtti                     \
+                  -fno-threadsafe-statics       \
+                  -fvisibility-inlines-hidden
+}
+elif ($cxx.class == 'msvc')
+  cxx.coptions += /EHs- /EHc- /GR- # Disable exception handling and RTTI.
+
+if $windows
+  objs{*}: cxx.poptions += -DHB_DLL_EXPORT
+else
+{
+  lib{harfbuzz}: c.libs += -pthread
+
+  if ($linux || $bsd)
+    c.libs += -lm
+}
+
+# Export options.
+#
+lib{$libs}:
+{
+  c.export.poptions   = "-I$src_root" "-I$src_base"
+  cxx.export.poptions = "-I$src_root" "-I$src_base"
+}
+
+lib{harfbuzz-icu}:    cxx.export.libs += lib{harfbuzz} $hb_icu_libs
+lib{harfbuzz-subset}: c.export.libs   += lib{harfbuzz}
+
+# For pre-releases use the complete version to make sure they cannot be used
+# in place of another pre-release or the final version. See the version module
+# for details on the version.* variable values.
+#
+if $version.pre_release
+  lib{$libs}: bin.lib.version = "-$version.project_id"
+else
+  lib{$libs}: bin.lib.version = "-$version.major.$version.minor"
+
+# Install public headers into the harfbuzz/ subdirectory of, say,
+# /usr/include/.
+#
+hxx{*} h{config}: install = false
+h{*}: install = include/harfbuzz/

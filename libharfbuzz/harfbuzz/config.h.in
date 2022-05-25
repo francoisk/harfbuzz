@@ -1,0 +1,38 @@
+#pragma once
+
+#define PACKAGE_NAME "HarfBuzz"
+#define PACKAGE_VERSION "@PACKAGE_VERSION@"
+
+#undef HAVE_CAIRO
+#undef HAVE_CAIRO_FT
+
+#undef HAVE_FREETYPE
+#undef HAVE_FT_DONE_MM_VAR
+#undef HAVE_FT_GET_VAR_BLEND_COORDINATES
+#undef HAVE_FT_SET_VAR_BLEND_COORDINATES
+
+#undef HAVE_GLIB
+#undef HAVE_GOBJECT
+
+#undef HAVE_ICU
+
+#undef HAVE_STDBOOL_H
+#undef HAVE_UNISTD_H
+
+#undef HAVE_ATEXIT
+
+#undef HAVE_ISATTY
+
+#undef HAVE_PTHREAD
+
+#undef HAVE_SYSCONF
+
+#undef HAVE_GETPAGESIZE
+
+#undef HAVE_MMAP
+#undef HAVE_SYS_MMAN_H
+#undef HAVE_MPROTECT
+
+#undef HAVE_NEWLOCALE
+#undef HAVE_USELOCALE
+#undef HAVE_XLOCALE_H

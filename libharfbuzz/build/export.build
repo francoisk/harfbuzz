@@ -1,6 +1,6 @@
 $out_root/
 {
-  include libharfbuzz/
+  include harfbuzz/
 }
 
-export $out_root/libharfbuzz/$import.target
+export $out_root/harfbuzz/$import.target

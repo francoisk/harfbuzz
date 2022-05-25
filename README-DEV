@@ -1,0 +1,55 @@
+1. Windows module definition (.def) files
+
+We generate these files manually.
+
+Note: In all cases remove the `LIBRARY` line at the end of the generated .def
+file because we don't need it.
+
+See upstream/src/meson.build for the set of headers used in each case. For
+example, the variable `hb_base_headers` is used for harfbuzz.def.
+
+Generate libharfbuzz/libharfbuzz/harfbuzz.def like this:
+
+  cd upstream/src
+  ./gen-def.py ../../libharfbuzz/libharfbuzz/harfbuzz.def \
+  hb-aat-layout.h \
+  hb-aat.h \
+  hb-blob.h \
+  hb-buffer.h \
+  hb-common.h \
+  hb-deprecated.h \
+  hb-draw.h \
+  hb-face.h \
+  hb-font.h \
+  hb-map.h \
+  hb-ot-color.h \
+  hb-ot-deprecated.h \
+  hb-ot-font.h \
+  hb-ot-layout.h \
+  hb-ot-math.h \
+  hb-ot-meta.h \
+  hb-ot-metrics.h \
+  hb-ot-name.h \
+  hb-ot-shape.h \
+  hb-ot-var.h \
+  hb-ot.h \
+  hb-set.h \
+  hb-shape-plan.h \
+  hb-shape.h \
+  hb-style.h \
+  hb-unicode.h \
+  hb.h \
+  hb-ft.h
+
+Generate libharfbuzz/libharfbuzz/harfbuzz-subset.def like this:
+
+  cd upstream/src
+  ./gen-def.py ../../libharfbuzz/libharfbuzz/harfbuzz-subset.def \
+  hb-subset.h \
+  hb-subset-repacker.h
+
+Generate libharfbuzz/libharfbuzz/harfbuzz-icu.def like this:
+
+  cd upstream/src
+  ./gen-def.py ../../libharfbuzz/libharfbuzz/harfbuzz-icu.def \
+  hb-icu.h
